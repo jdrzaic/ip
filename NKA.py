@@ -177,6 +177,92 @@ def novo(prefiks, iskorišteni):
     return prefiks
 
 
+def detektiraj_beskonacnu_petlju(N, stanje):
+    Q, Σ, Δ, q0, F = petorka(N)
+    funkcija = N.funkcija_prijelaza
+    assert stanje in Q
+    moguća = ε_zatvorenje(funkcija, {stanje})
+    for s in moguća:
+        if funkcija[s, ε] == {stanje}: return True
+    return False
+
+
+def iz_kojeg_stanja_mozes_doc_u_max_stanja(N):
+    funkcija = N.funkcija_prijelaza
+    qmax = N.početno
+    countmax = 0
+    for stanje in N.stanja:
+        moguća = ε_zatvorenje(funkcija, {stanje})
+        if len(moguća) > countmax:
+            countmax = len(moguća)
+            qmax = stanje
+    return qmax
+
+
+def detektiraj_max_petlju(N, stanja):
+    i = 0
+    while True:
+        nova_stanja = stanja | dolazna(N.funkcija_prijelaza, stanja, ε)
+        if nova_stanja == stanja: return i
+        i = i + 1
+        stanja = nova_stanja
+
+
+def isto_stanje_nputa(N, ulaz, n):
+    a = dict()
+    for stanje in N.stanja: a[stanje] = 0
+    stanja = set()
+    δ = N.funkcija_prijelaza
+    moguća = ε_zatvorenje(δ, {N.početno})
+    for znak in ulaz:
+        moguća = ε_zatvorenje(δ, dolazna(δ, moguća, znak))
+        for stanje in moguća: a[stanje] += 1
+    for stanje in a.keys():
+        if a[stanje] == n:
+            stanja.add(stanje)
+    return stanja
+
+
+def pravi_put_stanja(N, ulaz):
+    a = dict()
+    i = 0
+    δ = N.funkcija_prijelaza
+    moguća = ε_zatvorenje(δ, {N.početno})
+    for znak in ulaz:
+        for stanje1 in moguća:
+            for stanje2 in δ[stanje1, znak]:
+                a[stanje2, i] = stanje1
+        dolaz = dolazna(δ, moguća, znak)
+
+        zatvorenje = set(dolaz)
+        novo_zatvorenje = set(dolaz)
+        while (True):
+            for stanje1 in zatvorenje:
+                for stanje2 in δ[stanje1, ε]:
+                    if not stanje2 in zatvorenje:
+                        novo_zatvorenje.add(stanje2)
+                        a[stanje2, i] = [a[stanje1, i], stanje1]
+            if zatvorenje == novo_zatvorenje:
+                break
+            zatvorenje = set(novo_zatvorenje)
+
+        moguća = ε_zatvorenje(δ, dolaz)
+        i += 1
+    if moguća.isdisjoint(N.završna):
+        return False
+    for stanje in moguća:
+        if stanje in N.završna:
+            zav = stanje
+    stanja = list([zav])
+    while (i > 0):
+        i -= 1
+        zav = a[zav, i]
+        stanja.insert(0, zav)
+        if type(zav) is list:
+            zav = zav[0]
+    return stanja
+
+
 def nedeterministička_unija(N1, N2):
     if not N1.stanja.isdisjoint(N2.stanja):
         N1 = označi(N1, '1')
