@@ -1,4 +1,4 @@
-﻿import random, itertools, operator, types, pprint
+﻿import random, itertools, operator, types, pprint, contextlib
 
 
 Kartezijev_produkt = lambda *skupovi: set(itertools.product(*skupovi))
@@ -142,6 +142,17 @@ def Kartezijeva_konstrukcija_presjek(M1, M2):
     return M
 
 
+def konstruiraj_komplement(M):
+    Q, Σ, δ, q, F = petorka(M)
+    with contextlib.suppress(TypeError, ValueError):
+        FC = Q - F
+        return KonačniAutomat.definicija(Q, Σ, δ, q, FC)
+
+
+def Kartezijeva_konstrukcija_razlika(M1, M2):
+    M2C = konstruiraj_komplement(M2)
+    return Kartezijeva_konstrukcija_presjek(M1, M2C)
+
 def primjeri2():
     E1 = KonačniAutomat.iz_tablice('''
           0     1
@@ -158,6 +169,10 @@ def primjeri2():
     q001 q001 q001 #
     ''')  # page 44 example 1.21 figure 1.22
     E2.provjeri(lambda ulaz: '001' in ulaz)
+
+    E2C = konstruiraj_komplement(E2)
+    E2C.provjeri(lambda ulaz: '001' not in ulaz)
+    E2C.ispiši()
 
     E1u2 = Kartezijeva_konstrukcija_unija(E1, E2)
     E1u2.provjeri(lambda ulaz: ulaz.count('1') % 2 or '001' in ulaz)
