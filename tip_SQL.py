@@ -13,6 +13,9 @@ class SQL(enum.Enum):
     FROM = 'FROM'
     CREATE = 'CREATE'
     TABLE = 'TABLE'
+    DELETE = 'DELETE'
+    WHERE = 'WHERE'
+    JEDNAKO = '='
     OTVORENA = '('
     ZATVORENA = ')'
     BROJ = '10'
@@ -21,8 +24,8 @@ class SQL(enum.Enum):
     def __repr__(self):
         return self.name
 
-SQL_ključne_riječi = 'SELECT FROM CREATE TABLE'.split()
-SQL_operatori = list('*,();')
+SQL_ključne_riječi = 'SELECT FROM CREATE TABLE DELETE WHERE'.split()
+SQL_operatori = list('*,();=')
 
 def sql_lex(kôd):
     lex = Tokenizer(kôd)
@@ -89,12 +92,44 @@ class SQLParser(Parser):
         self.pročitaj(SQL.ZATVORENA)
         return naredba
 
+    def delete(self):
+        naredba = AST(stablo='naredba', vrsta=SQL.DELETE)
+        naredba.sve = False  # in order to check for value
+        self.pročitaj(SQL.DELETE)
+        naredba.atributi = []
+        što = self.granaj(SQL.ZVJEZDICA, SQL.FROM)
+        if što == SQL.ZVJEZDICA:
+            self.pročitaj(SQL.ZVJEZDICA)
+            naredba.sve = True
+        self.pročitaj(SQL.FROM)
+        naredba.tablica = self.pročitaj(SQL.IME)
+        if naredba.sve:
+            return naredba
+        self.pročitaj(SQL.WHERE)
+        while True:
+            atribut = self.vrijednost_atributa()
+            naredba.atributi.append(atribut)
+            sljedeće = self.granaj(SQL.ZAREZ, SQL.TOČKAZAREZ)
+            if sljedeće == SQL.TOČKAZAREZ:
+                break
+            self.pročitaj(SQL.ZAREZ)
+        return naredba
+
+    def vrijednost_atributa(self):
+        atribut = AST(stablo='atribut')
+        atribut.ključ = self.pročitaj(SQL.IME)
+        self.pročitaj(SQL.JEDNAKO)
+        atribut.vrijednost = self.pročitaj(SQL.IME)
+        return atribut
+
     def naredba(self):
-        početak = self.granaj(SQL.SELECT, SQL.CREATE)
+        početak = self.granaj(SQL.SELECT, SQL.CREATE, SQL.DELETE)
         if početak == SQL.SELECT:
             rezultat = self.select()
         elif početak == SQL.CREATE:
             rezultat = self.create()
+        elif početak == SQL.DELETE:
+            rezultat = self.delete()
         self.pročitaj(SQL.TOČKAZAREZ)
         return rezultat
 
@@ -120,3 +155,7 @@ if __name__ == '__main__':
     print(l)
     m = sql_parse('   SELECT firstName, lastName FROM wherever;')
     print(m)
+    d1 = sql_parse('DELETE * FROM wherever;')
+    print(d1)
+    d2 = sql_parse('DELETE FROM wherever WHERE atr1=val1, atr2=val2;')
+    print(d2)
