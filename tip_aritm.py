@@ -45,7 +45,7 @@ def aritm_lex(izraz):
 
 class AritmParser(Parser):
     def izraz(self):
-        č1 = self.član()
+        č1 = self.član()  # zbrajanje i oduzimanje
         dalje = self.granaj(Ar.KRAJ, Ar.PLUS, Ar.MINUS, Ar.ZATVORENA)
         if dalje == Ar.PLUS:
             self.pročitaj(Ar.PLUS)
@@ -58,17 +58,22 @@ class AritmParser(Parser):
         else:
             return č1
 
-    def član(self):
+    def član(self):  # množenje
         f1 = self.faktor()
-        dalje = self.granaj(Ar.KRAJ, Ar.PUTA, Ar.PLUS, Ar.MINUS, Ar.ZATVORENA)
+        dalje = self.granaj(Ar.KRAJ, Ar.PUTA, Ar.PLUS, Ar.MINUS, Ar.ZATVORENA, Ar.OTVORENA, Ar.BROJ)
         if dalje == Ar.PUTA:
             self.pročitaj(Ar.PUTA)
             f2 = self.član()
             return AST(stablo='umnožak', lijevo=f2, desno=f1)
+        elif dalje == Ar.OTVORENA:
+            f2 = self.član()
+            return AST(stablo='umnožak', lijevo=f2, desno=f1)
+        elif dalje == Ar.BROJ:
+            return AST(stablo='umnožak', lijevo=self.pročitaj(Ar.BROJ), desno=f1)
         else:
             return f1
 
-    def faktor(self):
+    def faktor(self):  # zagrade
         if self.granaj(Ar.BROJ, Ar.OTVORENA) == Ar.BROJ:
             return self.pročitaj(Ar.BROJ)
         else:
@@ -112,6 +117,7 @@ def testiraj(izraz):
 
 
 if __name__ == '__main__':
-    testiraj('(2+3)*4-1')
-    testiraj('6-1-3')
-    testiraj('-2+-3--2*(-2+3)-1')
+    print(aritm_parse('(2+3)4-1'))
+    # testiraj('4(2+3)-1')
+    # testiraj('6-1-3')
+    # testiraj('-2+-3--2*(-2+3)-1')
