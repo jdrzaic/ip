@@ -59,7 +59,7 @@ class AritmParser(Parser):
             return č1
 
     def član(self):  # množenje
-        f1 = self.faktor()
+        p1 = self.faktor()
         dalje = self.granaj(Ar.KRAJ, Ar.PUTA, Ar.PLUS, Ar.MINUS, Ar.ZATVORENA, Ar.OTVORENA, Ar.BROJ)
         if dalje == Ar.PUTA:
             self.pročitaj(Ar.PUTA)
@@ -72,6 +72,9 @@ class AritmParser(Parser):
             return AST(stablo='umnožak', lijevo=self.pročitaj(Ar.BROJ), desno=f1)
         else:
             return f1
+
+    def potencija(self):
+        pass
 
     def faktor(self):  # zagrade
         if self.granaj(Ar.BROJ, Ar.OTVORENA) == Ar.BROJ:
@@ -117,7 +120,7 @@ def testiraj(izraz):
 
 
 if __name__ == '__main__':
-    print(aritm_parse('(2+3)4-1'))
-    # testiraj('4(2+3)-1')
+    print(aritm_parse('5(2+3)4-1(1+4)'))
+    # testiraj('4(2+3)5(1+2)4-1')
     # testiraj('6-1-3')
     # testiraj('-2+-3--2*(-2+3)-1')
