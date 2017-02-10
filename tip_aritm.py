@@ -8,6 +8,7 @@ class Ar(enum.Enum):
     PLUS = '+'
     MINUS = '-'
     PUTA = '*'
+    POT = '^'
     OTVORENA = '('
     ZATVORENA = ')'
 
@@ -58,23 +59,24 @@ class AritmParser(Parser):
         else:
             return č1
 
-    def član(self):  # množenje
-        p1 = self.faktor()
+    def član(self, impl=False):  # množenje
+        f1 = self.faktor()
         dalje = self.granaj(Ar.KRAJ, Ar.PUTA, Ar.PLUS, Ar.MINUS, Ar.ZATVORENA, Ar.OTVORENA, Ar.BROJ)
         if dalje == Ar.PUTA:
             self.pročitaj(Ar.PUTA)
             f2 = self.član()
             return AST(stablo='umnožak', lijevo=f2, desno=f1)
         elif dalje == Ar.OTVORENA:
-            f2 = self.član()
+            f2 = self.član(True)
             return AST(stablo='umnožak', lijevo=f2, desno=f1)
         elif dalje == Ar.BROJ:
-            return AST(stablo='umnožak', lijevo=self.pročitaj(Ar.BROJ), desno=f1)
+            print(f1)
+            if not impl or not hasattr(f1, 'tip') or hasattr(f1, 'tip') and f1.tip != Ar.BROJ:
+                return AST(stablo='umnožak', lijevo=self.pročitaj(Ar.BROJ), desno=f1)
+            else:
+                self.pročitaj(Ar.KRAJ)
         else:
             return f1
-
-    def potencija(self):
-        pass
 
     def faktor(self):  # zagrade
         if self.granaj(Ar.BROJ, Ar.OTVORENA) == Ar.BROJ:
@@ -120,7 +122,7 @@ def testiraj(izraz):
 
 
 if __name__ == '__main__':
-    print(aritm_parse('5(2+3)4-1(1+4)'))
-    # testiraj('4(2+3)5(1+2)4-1')
+    print(aritm_parse('5(1+2)*5-1*(1+4)6 7'))
+    # testiraj('4(2+3)4 5(1+2)4-1')
     # testiraj('6-1-3')
     # testiraj('-2+-3--2*(-2+3)-1')
